@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "711053109880",
+    "project_id": "soulflow-health-app",
+    "storage_bucket": "soulflow-health-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:711053109880:android:b687a41fe513ff520ddb8d",
+        "android_client_info": {
+          "package_name": "com.example.health_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMPBEDuxAv1p_ctPvDeHQV4BlBY7dVXNQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
