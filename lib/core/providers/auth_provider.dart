@@ -4,7 +4,9 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: '711053109880-8q4tb8fd47rfqot8lija2tlh3lnkp14b.apps.googleusercontent.com',
+  );
   User? _user;
   bool _isLoading = false;
 
