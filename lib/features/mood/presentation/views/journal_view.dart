@@ -43,6 +43,31 @@ class _JournalViewState extends State<JournalView> {
             return const Center(child: CircularProgressIndicator(color: SoulFlowTheme.primarySage));
           }
 
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('⚠️', style: TextStyle(fontSize: 48)),
+                  const SizedBox(height: 16),
+                  Text(
+                    localizations.translate('no_journal_yet'),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: isDark ? Colors.white : SoulFlowTheme.textCharcoal,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${snapshot.error}',
+                    style: const TextStyle(color: SoulFlowTheme.textMuted, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
+
           final logs = snapshot.data ?? [];
 
           if (logs.isEmpty) {
