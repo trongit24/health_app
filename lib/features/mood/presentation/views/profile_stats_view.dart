@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/theme/soul_flow_theme.dart';
@@ -87,102 +85,6 @@ class _ProfileStatsViewState extends State<ProfileStatsView> {
     } else {
       await NotificationService().cancelDailyReminder();
     }
-  }
-
-  void _exportLogs(List<MoodModel> logs) async {
-    final localizations = AppLocalizations.of(context);
-    try {
-      final jsonList = logs.map((log) {
-        final map = log.toFirestore();
-        map['id'] = log.id;
-        map['timestamp'] = log.timestamp.millisecondsSinceEpoch;
-        return map;
-      }).toList();
-
-      final jsonString = jsonEncode(jsonList);
-      await Clipboard.setData(ClipboardData(text: jsonString));
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(localizations.translate('export_success')),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('Export failed: $e');
-    }
-  }
-
-  void _showImportDialog() {
-    final localizations = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(localizations.translate('import_data')),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: textController,
-                maxLines: 6,
-                style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 13),
-                decoration: const InputDecoration(
-                  hintText: 'Paste backup JSON string here...',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(localizations.translate('close'), style: const TextStyle(color: SoulFlowTheme.textMuted)),
-            ),
-            TextButton(
-              onPressed: () async {
-                final pastedText = textController.text.trim();
-                if (pastedText.isEmpty) return;
-
-                try {
-                  final List<dynamic> jsonList = jsonDecode(pastedText);
-                  final List<MoodModel> imported = jsonList.map((item) {
-                    final map = item as Map<String, dynamic>;
-                    return MoodModel.fromMap(map, docId: map['id'] as String?);
-                  }).toList();
-
-                  await _moodManager.importLogs(imported);
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(localizations.translate('import_success')),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(localizations.translate('import_failed')),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                }
-              },
-              child: Text(localizations.translate('import_data'), style: const TextStyle(color: SoulFlowTheme.primarySage, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
@@ -494,6 +396,25 @@ class _ProfileStatsViewState extends State<ProfileStatsView> {
                 activeTrackColor: SoulFlowTheme.primarySage,
               ),
             ),
+            if (_notificationsEnabled) ...[
+              const Divider(color: SoulFlowTheme.accentGlow, height: 1),
+              ListTile(
+                leading: const Icon(Icons.notifications_active_outlined, color: SoulFlowTheme.primarySage),
+                title: const Text('Thử thông báo check-in', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: SoulFlowTheme.primarySage)),
+                subtitle: const Text('Nhận thông báo check-in tức thì để kiểm tra', style: TextStyle(fontSize: 11)),
+                onTap: () async {
+                  await NotificationService().showInstantCheckInNotification();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Đã gửi thông báo check-in tức thì! Chạm để mở nhanh. 🧠'),
+                        backgroundColor: SoulFlowTheme.primarySage,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
             const Divider(color: SoulFlowTheme.accentGlow, height: 1),
 
             // Theme toggle
@@ -531,22 +452,6 @@ class _ProfileStatsViewState extends State<ProfileStatsView> {
                   }
                 },
               ),
-            ),
-            const Divider(color: SoulFlowTheme.accentGlow, height: 1),
-
-            // Export logs
-            ListTile(
-              title: Text(localizations.translate('export_data'), style: const TextStyle(fontSize: 14)),
-              trailing: const Icon(Icons.copy_all, color: SoulFlowTheme.primarySage),
-              onTap: () => _exportLogs(logs),
-            ),
-            const Divider(color: SoulFlowTheme.accentGlow, height: 1),
-
-            // Import logs
-            ListTile(
-              title: Text(localizations.translate('import_data'), style: const TextStyle(fontSize: 14)),
-              trailing: const Icon(Icons.drive_file_move_outlined, color: SoulFlowTheme.primarySage),
-              onTap: _showImportDialog,
             ),
           ],
         ),

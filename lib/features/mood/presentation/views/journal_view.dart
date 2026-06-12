@@ -3,6 +3,7 @@ import '../../../../core/theme/soul_flow_theme.dart';
 import '../../../../core/services/mood_manager.dart';
 import '../../../../core/services/localizations.dart';
 import '../../data/models/mood_model.dart';
+import '../../../../core/services/tags_data.dart';
 import 'add_mood_screen.dart';
 
 class JournalView extends StatefulWidget {
@@ -255,7 +256,7 @@ class _JournalViewState extends State<JournalView> {
                     children: log.tags.map((tag) {
                       // Lookup tag localized key
                       String translatedTag = tag;
-                      final match = _presetTags.firstWhere(
+                      final match = TagsData.allTags.firstWhere(
                         (element) => element['label'] == tag,
                         orElse: () => {},
                       );
@@ -288,14 +289,4 @@ class _JournalViewState extends State<JournalView> {
     );
   }
 
-  final List<Map<String, String>> _presetTags = [
-    {'emoji': '🧘', 'label': 'Tĩnh lặng', 'key': 'tag_calm'},
-    {'emoji': '⚡', 'label': 'Căng thẳng', 'key': 'tag_stressed'},
-    {'emoji': '🎉', 'label': 'Hào hứng', 'key': 'tag_excited'},
-    {'emoji': '😴', 'label': 'Mệt mỏi', 'key': 'tag_tired'},
-    {'emoji': '🧠', 'label': 'Tập trung', 'key': 'tag_focused'},
-    {'emoji': '😟', 'label': 'Lo âu', 'key': 'tag_anxious'},
-    {'emoji': '💖', 'label': 'Biết ơn', 'key': 'tag_grateful'},
-    {'emoji': '🍀', 'label': 'Bình yên', 'key': 'tag_peaceful'},
-  ];
 }
