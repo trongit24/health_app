@@ -21,11 +21,12 @@ class DatabaseService {
   /// Private helper to get the type-safe collection reference for 'mood_logs'.
   /// Uses Firestore's `withConverter` to automatically map database documents
   /// to and from our robust [MoodModel].
-  CollectionReference<MoodModel> get _moodLogsCollection =>
-      _firestore.collection('mood_logs').withConverter<MoodModel>(
-            fromFirestore: MoodModel.fromFirestore,
-            toFirestore: (mood, _) => mood.toFirestore(),
-          );
+  CollectionReference<MoodModel> get _moodLogsCollection => _firestore
+      .collection('mood_logs')
+      .withConverter<MoodModel>(
+        fromFirestore: MoodModel.fromFirestore,
+        toFirestore: (mood, _) => mood.toFirestore(),
+      );
 
   /// Pushes a new mood log to the Firestore collection 'mood_logs'.
   ///
@@ -36,9 +37,7 @@ class DatabaseService {
       final uid = _currentUserId;
 
       // Ensure the model's userId matches the authenticated user's ID
-      final moodToSave = mood.userId == uid
-          ? mood
-          : mood.copyWith(userId: uid);
+      final moodToSave = mood.userId == uid ? mood : mood.copyWith(userId: uid);
 
       return await _moodLogsCollection.add(moodToSave);
     } catch (e) {
@@ -56,13 +55,14 @@ class DatabaseService {
     try {
       final uid = _currentUserId;
 
-      return _moodLogsCollection
-          .where('userId', isEqualTo: uid)
-          .orderBy('timestamp', descending: true)
-          .snapshots()
-          .map((snapshot) {
-            return snapshot.docs.map((doc) => doc.data()).toList();
-          });
+      return _moodLogsCollection.where('userId', isEqualTo: uid).snapshots().map(
+        (snapshot) {
+          final logs = snapshot.docs.map((doc) => doc.data()).toList();
+          // Sort in memory instead of Firestore to avoid composite index issues
+          logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+          return logs;
+        },
+      );
     } catch (e) {
       throw DatabaseException('Failed to fetch mood stream: $e');
     }

@@ -26,10 +26,38 @@ class _ProfileStatsViewState extends State<ProfileStatsView> {
 
   final List<String> _moodEmojis = ['😢', '🙁', '😐', '🙂', '😀'];
 
+  String _profileName = 'Thành viên SoulFlow';
+  String _profileSlogan = 'Nơi tâm trí bình yên';
+  String _profileAvatar = '🧘';
+
+  final List<String> _avatarOptions = ['🧘', '🐱', '🐼', '🦊', '🐰', '🐯', '🦄', '🌻', '⭐', '🌈', '🦋', '🐳'];
+
   @override
   void initState() {
     super.initState();
     _loadNotificationSetting();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _profileName = prefs.getString('profile_name') ?? 'Thành viên SoulFlow';
+      _profileSlogan = prefs.getString('profile_slogan') ?? 'Nơi tâm trí bình yên';
+      _profileAvatar = prefs.getString('profile_avatar') ?? '🧘';
+    });
+  }
+
+  Future<void> _saveProfileData(String name, String slogan, String avatar) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('profile_name', name);
+    await prefs.setString('profile_slogan', slogan);
+    await prefs.setString('profile_avatar', avatar);
+    setState(() {
+      _profileName = name;
+      _profileSlogan = slogan;
+      _profileAvatar = avatar;
+    });
   }
 
   Future<void> _loadNotificationSetting() async {
@@ -221,17 +249,96 @@ class _ProfileStatsViewState extends State<ProfileStatsView> {
     );
   }
 
-  Widget _buildProfileHeaderCard(AppLocalizations localizations, bool isDark) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final bool isLinked = _moodManager.isCloudSyncEnabled && !authProvider.isAnonymous;
-    
-    final userText = isLinked
-        ? (authProvider.user?.displayName ?? 'Thành viên SoulFlow')
-        : 'Người dùng SoulFlow';
-    final subtitleText = isLinked
-        ? localizations.translate('cloud_connected')
-        : localizations.translate('cloud_disconnected');
+  void _showEditProfileDialog() {
+    final nameCtrl = TextEditingController(text: _profileName);
+    final sloganCtrl = TextEditingController(text: _profileSlogan);
+    String tempAvatar = _profileAvatar;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: isDark ? SoulFlowTheme.surfaceCardDark : Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              title: const Text('Chỉnh sửa Hồ sơ', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Chọn Ảnh đại diện:', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      alignment: WrapAlignment.center,
+                      children: _avatarOptions.map((emoji) {
+                        final isSelected = tempAvatar == emoji;
+                        return GestureDetector(
+                          onTap: () => setDialogState(() => tempAvatar = emoji),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? SoulFlowTheme.primarySage.withValues(alpha: 0.2) : Colors.transparent,
+                              border: Border.all(color: isSelected ? SoulFlowTheme.primarySage : Colors.transparent, width: 2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(emoji, style: const TextStyle(fontSize: 28)),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: nameCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Tên hiển thị',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: sloganCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Châm ngôn / Cảm xúc',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: SoulFlowTheme.primarySage,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    _saveProfileData(
+                      nameCtrl.text.trim().isEmpty ? 'SoulFlow Member' : nameCtrl.text.trim(),
+                      sloganCtrl.text.trim(),
+                      tempAvatar,
+                    );
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Lưu', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            );
+          }
+        );
+      }
+    );
+  }
+
+  Widget _buildProfileHeaderCard(AppLocalizations localizations, bool isDark) {
     return Card(
       elevation: 0,
       color: isDark ? SoulFlowTheme.surfaceCardDark : SoulFlowTheme.surfaceCard,
@@ -243,10 +350,10 @@ class _ProfileStatsViewState extends State<ProfileStatsView> {
         padding: const EdgeInsets.all(20.0),
         child: Row(
           children: [
-            const CircleAvatar(
+            CircleAvatar(
               radius: 36,
               backgroundColor: SoulFlowTheme.accentGlow,
-              child: Text('🧘', style: TextStyle(fontSize: 36)),
+              child: Text(_profileAvatar, style: const TextStyle(fontSize: 36)),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -254,7 +361,7 @@ class _ProfileStatsViewState extends State<ProfileStatsView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    userText,
+                    _profileName,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -263,7 +370,7 @@ class _ProfileStatsViewState extends State<ProfileStatsView> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    subtitleText,
+                    _profileSlogan,
                     style: const TextStyle(
                       fontSize: 12,
                       color: SoulFlowTheme.textMuted,
@@ -272,6 +379,10 @@ class _ProfileStatsViewState extends State<ProfileStatsView> {
                 ],
               ),
             ),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, color: SoulFlowTheme.primarySage),
+              onPressed: _showEditProfileDialog,
+            )
           ],
         ),
       ),

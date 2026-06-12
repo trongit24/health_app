@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import '../../../../core/services/mood_manager.dart';
 import '../../../../core/services/localizations.dart';
 import '../../../../core/theme/soul_flow_theme.dart';
@@ -41,6 +42,14 @@ class _AddMoodScreenState extends State<AddMoodScreen> {
   ];
 
   final List<String> _moodEmojis = ['😢', '🙁', '😐', '🙂', '😀'];
+
+  final List<String> _lottieUrls = [
+    'https://fonts.gstatic.com/s/e/notoemoji/latest/1f62d/lottie.json',
+    'https://fonts.gstatic.com/s/e/notoemoji/latest/1f61e/lottie.json',
+    'https://fonts.gstatic.com/s/e/notoemoji/latest/1f610/lottie.json',
+    'https://fonts.gstatic.com/s/e/notoemoji/latest/1f642/lottie.json',
+    'https://fonts.gstatic.com/s/e/notoemoji/latest/1f600/lottie.json',
+  ];
 
   @override
   void initState() {
@@ -245,6 +254,7 @@ class _AddMoodScreenState extends State<AddMoodScreen> {
       child: Column(
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(5, (index) {
               final score = index + 1;
@@ -257,48 +267,66 @@ class _AddMoodScreenState extends State<AddMoodScreen> {
                     _selectedMoodScore = score;
                   });
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutBack,
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? color.withValues(alpha: 0.25) : Colors.transparent,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? color : Colors.transparent,
-                      width: 2.5,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutBack,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isSelected ? color.withValues(alpha: 0.25) : Colors.transparent,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? color : Colors.transparent,
+                          width: 2.5,
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: color.withValues(alpha: 0.4),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                )
+                              ]
+                            : null,
+                      ),
+                      transform: Matrix4.diagonal3Values(isSelected ? 1.25 : 1.0, isSelected ? 1.25 : 1.0, 1.0),
+                      child: SizedBox(
+                        width: 42,
+                        height: 42,
+                        child: Lottie.network(
+                          _lottieUrls[index],
+                          animate: isSelected,
+                          repeat: isSelected,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Center(
+                              child: Text(
+                                _moodEmojis[index],
+                                style: const TextStyle(fontSize: 32),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: color.withValues(alpha: 0.4),
-                              blurRadius: 10,
-                              spreadRadius: 1,
-                            )
-                          ]
-                        : null,
-                  ),
-                  transform: Matrix4.diagonal3Values(isSelected ? 1.25 : 1.0, isSelected ? 1.25 : 1.0, 1.0),
-                  child: Text(
-                    _moodEmojis[index],
-                    style: const TextStyle(fontSize: 32),
-                  ),
+                    const SizedBox(height: 12),
+                    AnimatedOpacity(
+                      opacity: isSelected ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      child: isSelected ? Text(
+                        labels[index],
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: color.withRed(80).withBlue(100),
+                        ),
+                      ) : const SizedBox(height: 15),
+                    ),
+                  ],
                 ),
               );
             }),
-          ),
-          const SizedBox(height: 16),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Text(
-              labels[_selectedMoodScore - 1],
-              key: ValueKey<int>(_selectedMoodScore),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: _moodColors[_selectedMoodScore - 1].withRed(80).withBlue(100),
-              ),
-            ),
           ),
         ],
       ),

@@ -186,30 +186,38 @@ class MoodManager {
           },
           onError: (error) {
             // Fallback to local memory logs if Firestore fails/denied
-            _notifyListeners();
+            debugPrint('Firestore stream error, falling back to local: $error');
+            // Use microtask to ensure broadcast listeners are subscribed before emitting
+            Future.microtask(() => _emitLocalLogs());
           },
         );
       } catch (_) {
-        _notifyListeners();
+        Future.microtask(() => _emitLocalLogs());
       }
     } else {
-      _notifyListeners();
+      Future.microtask(() => _emitLocalLogs());
     }
   }
 
   /// Emits real-time lists of mood logs
   Stream<List<MoodModel>> get moodStream {
-    // Return the controller's stream, and push initial value to start
     final user = _safeCurrentUser();
     if (user != null) {
       try {
-        // Return active subscription-driven stream
+        // Re-subscribe to Firestore to ensure new broadcast listeners get fresh data
+        _updateStreamSubscription(user);
         return _moodsController.stream;
       } catch (_) {}
     }
     // Return local list as stream immediately
-    Future.microtask(() => _notifyListeners());
+    Future.microtask(() => _emitLocalLogs());
     return _moodsController.stream;
+  }
+
+  /// Always emits current in-memory logs to the stream (used as fallback)
+  void _emitLocalLogs() {
+    _inMemoryLogs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    _moodsController.add(List.unmodifiable(_inMemoryLogs));
   }
 
   void _notifyListeners() {

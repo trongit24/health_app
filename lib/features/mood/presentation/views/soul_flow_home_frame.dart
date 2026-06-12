@@ -6,6 +6,7 @@ import 'journal_view.dart';
 import 'zen_space_view.dart';
 import 'profile_stats_view.dart';
 import 'add_mood_screen.dart';
+import 'ai_support_screen.dart';
 
 class SoulFlowHomeFrame extends StatefulWidget {
   const SoulFlowHomeFrame({super.key});
@@ -47,7 +48,9 @@ class _SoulFlowHomeFrameState extends State<SoulFlowHomeFrame> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF121816) : SoulFlowTheme.backgroundCream,
+      backgroundColor: isDark
+          ? const Color(0xFF121816)
+          : SoulFlowTheme.backgroundCream,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -55,11 +58,11 @@ class _SoulFlowHomeFrameState extends State<SoulFlowHomeFrame> {
         title: Text(
           'SoulFlow',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.5,
-                color: SoulFlowTheme.primarySage,
-              ),
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+            color: SoulFlowTheme.primarySage,
+          ),
         ),
         actions: [
           IconButton(
@@ -68,7 +71,10 @@ class _SoulFlowHomeFrameState extends State<SoulFlowHomeFrame> {
                 MaterialPageRoute(builder: (context) => const AddMoodScreen()),
               );
             },
-            icon: const Icon(Icons.edit_calendar_outlined, color: SoulFlowTheme.primarySage),
+            icon: const Icon(
+              Icons.edit_calendar_outlined,
+              color: SoulFlowTheme.primarySage,
+            ),
             tooltip: localizations.translate('add_mood_title'),
           ),
           const SizedBox(width: 8),
@@ -80,14 +86,26 @@ class _SoulFlowHomeFrameState extends State<SoulFlowHomeFrame> {
           child: _views[_currentIndex],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const AiSupportScreen()),
+          );
+        },
+        backgroundColor: SoulFlowTheme.primarySage,
+        tooltip: 'AI Support',
+        child: const Icon(Icons.auto_awesome, color: Colors.white),
+      ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
             BoxShadow(
-              color: SoulFlowTheme.primarySage.withValues(alpha: isDark ? 0.02 : 0.08),
+              color: SoulFlowTheme.primarySage.withValues(
+                alpha: isDark ? 0.02 : 0.08,
+              ),
               blurRadius: 20,
               offset: const Offset(0, -4),
-            )
+            ),
           ],
         ),
         child: ClipRRect(
@@ -99,11 +117,18 @@ class _SoulFlowHomeFrameState extends State<SoulFlowHomeFrame> {
                 _currentIndex = index;
               });
             },
-            backgroundColor: isDark ? SoulFlowTheme.surfaceCardDark : Colors.white,
+            backgroundColor: isDark
+                ? SoulFlowTheme.surfaceCardDark
+                : Colors.white,
             selectedItemColor: SoulFlowTheme.primarySage,
-            unselectedItemColor: isDark ? Colors.grey.shade600 : SoulFlowTheme.textMuted,
+            unselectedItemColor: isDark
+                ? Colors.grey.shade600
+                : SoulFlowTheme.textMuted,
             type: BottomNavigationBarType.fixed,
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            selectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
             unselectedLabelStyle: const TextStyle(fontSize: 11),
             elevation: 0,
             items: [
