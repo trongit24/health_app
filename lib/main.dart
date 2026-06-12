@@ -37,7 +37,8 @@ void main() async {
     final prefs = await SharedPreferences.getInstance();
     final notificationsEnabled = prefs.getBool('daily_notification_enabled') ?? true;
     if (notificationsEnabled) {
-      await notificationService.requestPermissions();
+      // Do not request permissions here before runApp(). It will block the UI and cause a white screen.
+      // Permissions should be requested inside the App UI (e.g., Home Screen or Onboarding).
       await notificationService.scheduleDailyReminder();
     }
   } catch (e) {

@@ -5,7 +5,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:http/http.dart' as http;
 
 class AiService {
-  static const String _defaultApiKey = '';
+  static const String _defaultApiKey = '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';
   static const String _apiKeyPrefsKey = 'gemini_api_key';
 
   static const List<String> _geminiModelFallbacks = [
@@ -25,11 +25,7 @@ class AiService {
 
   Future<void> initialize() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedKey = prefs.getString(_apiKeyPrefsKey);
-      if (savedKey != null && savedKey.isNotEmpty) {
-        _apiKey = savedKey;
-      }
+      _apiKey = _defaultApiKey;
       _initialized = true;
     } catch (e) {
       debugPrint('[AiService] initialize() error: $e');
@@ -143,7 +139,7 @@ class AiService {
 
   Future<String> getAdvice(String userMessage) async {
     if (!isReady) return 'Đang khởi tạo...';
-    if (!hasValidKey) return '⚠️ Vui lòng nhấn ⚙️ để nhập API Key. Bạn có thể dùng key của Gemini, hoặc Groq (gsk_...) hoàn toàn miễn phí!';
+    if (!hasValidKey) return '⚠️ API Key không hợp lệ.';
 
     try {
       final prompt = '''Bạn là một chuyên gia tâm lý học và một người bạn đồng hành ảo trong ứng dụng chăm sóc sức khỏe tinh thần tên là SoulFlow. 

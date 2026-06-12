@@ -281,22 +281,22 @@ class _AddMoodScreenState extends State<AddMoodScreen> {
                           color: isSelected ? color : Colors.transparent,
                           width: 2.5,
                         ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: color.withValues(alpha: 0.4),
-                                  blurRadius: 10,
-                                  spreadRadius: 1,
-                                )
-                              ]
-                            : null,
+                        boxShadow: [
+                          BoxShadow(
+                            color: isSelected ? color.withValues(alpha: 0.4) : Colors.transparent,
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          )
+                        ],
                       ),
+                      transformAlignment: Alignment.center,
                       transform: Matrix4.diagonal3Values(isSelected ? 1.25 : 1.0, isSelected ? 1.25 : 1.0, 1.0),
                       child: SizedBox(
                         width: 42,
                         height: 42,
                         child: Lottie.network(
                           _lottieUrls[index],
+                          key: ValueKey(_lottieUrls[index]),
                           animate: isSelected,
                           repeat: isSelected,
                           errorBuilder: (context, error, stackTrace) {
@@ -311,17 +311,23 @@ class _AddMoodScreenState extends State<AddMoodScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    AnimatedOpacity(
-                      opacity: isSelected ? 1.0 : 0.0,
+                    AnimatedSize(
                       duration: const Duration(milliseconds: 200),
-                      child: isSelected ? Text(
-                        labels[index],
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: color.withRed(80).withBlue(100),
-                        ),
-                      ) : const SizedBox(height: 15),
+                      curve: Curves.easeInOut,
+                      child: AnimatedOpacity(
+                        opacity: isSelected ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 200),
+                        child: isSelected 
+                          ? Text(
+                              labels[index],
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: color.withRed(80).withBlue(100),
+                              ),
+                            ) 
+                          : const SizedBox(height: 15, width: 0),
+                      ),
                     ),
                   ],
                 ),
@@ -371,7 +377,7 @@ class _AddMoodScreenState extends State<AddMoodScreen> {
             style: TextStyle(color: isDark ? Colors.white : Colors.grey.shade800, fontSize: 15),
             decoration: InputDecoration(
               hintText: localizations.translate('journal_placeholder'),
-              hintStyle: TextStyle(color: isDark ? Colors.grey.shade600 : Colors.grey.shade400, fontSize: 13.5),
+              hintStyle: TextStyle(color: isDark ? const Color.fromARGB(255, 83, 82, 82) : Colors.grey.shade400, fontSize: 13.5),
               contentPadding: const EdgeInsets.all(18),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(20),

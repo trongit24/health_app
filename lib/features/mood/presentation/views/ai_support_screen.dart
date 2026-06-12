@@ -21,7 +21,7 @@ class _AiSupportScreenState extends State<AiSupportScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<_Message> _messages = [
     _Message(
-      'Chào bạn! Mình là trợ lý AI của SoulFlow 🌿\n\nBạn có thể chia sẻ nhật ký, cảm xúc hôm nay hoặc bất cứ điều gì bạn đang nghĩ. Mình ở đây để lắng nghe và chia sẻ cùng bạn.\n\n💡 Nếu đây là lần đầu, hãy nhấn ⚙️ ở góc trên phải để nhập API Key nhé!',
+      'Chào bạn! Mình là trợ lý AI của SoulFlow 🌿\n\nBạn có thể chia sẻ nhật ký, cảm xúc hôm nay hoặc bất cứ điều gì bạn đang nghĩ. Mình ở đây để lắng nghe và chia sẻ cùng bạn.',
       false,
     ),
   ];
@@ -90,107 +90,6 @@ class _AiSupportScreenState extends State<AiSupportScreen> {
     _scrollToBottom();
   }
 
-  void _showApiKeyDialog() {
-    final keyController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (dialogContext) {
-        bool isTesting = false;
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            return AlertDialog(
-              title: const Text('Cài đặt API Key'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Nhập Google Gemini API Key của bạn.\nKey chỉ được lưu cục bộ trên máy, hoàn toàn an toàn.',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: keyController,
-                    decoration: const InputDecoration(
-                      labelText: 'API Key',
-                      hintText: 'AIzaSy...',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  if (isTesting) ...[
-                    const SizedBox(height: 12),
-                    const Row(
-                      children: [
-                        SizedBox(
-                          width: 16, height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 8),
-                        Text('Đang kiểm tra kết nối...', style: TextStyle(fontSize: 13)),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext),
-                  child: const Text('Hủy'),
-                ),
-                ElevatedButton(
-                  onPressed: isTesting
-                      ? null
-                      : () async {
-                          final key = keyController.text.trim();
-                          if (key.isEmpty) return;
-
-                          setDialogState(() => isTesting = true);
-
-                          // Lưu key
-                          await _aiService.updateApiKey(key);
-
-                          // Test kết nối
-                          final error = await _aiService.testConnection();
-
-                          if (!mounted) return;
-
-                          if (error == null) {
-                            // Thành công!
-                            Navigator.pop(dialogContext);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('✅ Kết nối AI thành công! Bạn có thể trò chuyện ngay.'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                            setState(() {
-                              _messages.add(_Message(
-                                '✅ API Key đã được lưu và kết nối thành công! Bạn hãy chia sẻ cảm xúc hôm nay nhé 😊',
-                                false,
-                              ));
-                            });
-                            _scrollToBottom();
-                          } else {
-                            // Thất bại
-                            setDialogState(() => isTesting = false);
-                            if (!dialogContext.mounted) return;
-                            ScaffoldMessenger.of(dialogContext).showSnackBar(
-                              SnackBar(
-                                content: Text('❌ $error'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                  child: const Text('Lưu & Kiểm tra'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -219,13 +118,6 @@ class _AiSupportScreenState extends State<AiSupportScreen> {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: _showApiKeyDialog,
-            tooltip: 'Cài đặt API Key',
-          ),
-        ],
       ),
       body: Column(
         children: [
