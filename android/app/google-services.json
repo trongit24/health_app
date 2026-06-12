@@ -12,7 +12,20 @@
           "package_name": "com.example.health_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "711053109880-lni2t2hs36gs47btd3c4973fu7mahnou.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.health_app",
+            "certificate_hash": "5ae03968fa285e99c9fd9561be0a47fd47e0c040"
+          }
+        },
+        {
+          "client_id": "711053109880-8q4tb8fd47rfqot8lija2tlh3lnkp14b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDMPBEDuxAv1p_ctPvDeHQV4BlBY7dVXNQ"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "711053109880-8q4tb8fd47rfqot8lija2tlh3lnkp14b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

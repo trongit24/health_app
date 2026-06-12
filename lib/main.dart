@@ -14,7 +14,7 @@ import 'core/providers/auth_provider.dart';
 import 'features/auth/presentation/views/onboarding_screen.dart';
 import 'features/auth/presentation/views/login_screen.dart';
 import 'features/mood/presentation/views/soul_flow_home_frame.dart';
-import 'core/services/ai_service.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,12 +44,7 @@ void main() async {
     debugPrint('Notification service initialization failed: $e');
   }
 
-  // 3. Initialize AI Service
-  try {
-    await AiService().initialize();
-  } catch (e) {
-    debugPrint('AI service initialization failed: $e');
-  }
+
 
   // 4. Determine Initial Route
   Widget initialScreen;
@@ -91,6 +86,7 @@ class SoulFlowApp extends StatelessWidget {
     final localeProvider = Provider.of<LocaleProvider>(context);
 
     return MaterialApp(
+      navigatorKey: NotificationService.navigatorKey,
       title: 'SoulFlow',
       theme: SoulFlowTheme.lightTheme,
       darkTheme: SoulFlowTheme.darkTheme,
