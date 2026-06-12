@@ -21,10 +21,10 @@ class _ZenSpaceViewState extends State<ZenSpaceView>
   int _selectedSoundIndex = 0;
 
   final List<String> _soundUrls = [
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3', // Rain
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3', // Wind
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', // Ocean
-    'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', // Bell
+    'https://raw.githubusercontent.com/karthiknvd/noctune/main/sounds/rain.mp3', 
+    'https://raw.githubusercontent.com/karthiknvd/noctune/main/sounds/wind.mp3', 
+    'https://raw.githubusercontent.com/brarcher/baby-sleep-sounds/master/app/src/main/res/raw/ocean.mp3', // Ocean
+    'https://raw.githubusercontent.com/adafruit/Adafruit_Learning_System_Guides/master/Playing_Sounds_and_Using_Buttons_with_Raspberry_Pi/temple-bell.mp3', // Bell
   ];
 
   @override
@@ -56,6 +56,7 @@ class _ZenSpaceViewState extends State<ZenSpaceView>
     
     // Loop audio indefinitely
     _audioPlayer.setLoopMode(LoopMode.one);
+    _audioPlayer.setWebCrossOrigin(WebCrossOrigin.anonymous);
   }
 
   @override
