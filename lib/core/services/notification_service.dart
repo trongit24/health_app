@@ -1,11 +1,17 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import '../../features/mood/presentation/views/add_mood_screen.dart';
 
 /// A premium, highly reliable service to manage local notifications.
 /// Handles Android 13+ & iOS permissions and schedules recurring daily mental check reminders.
 class NotificationService {
+  // Global navigator key to navigate from background/tapped notifications
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   // Singleton pattern for application-wide easy access
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -17,6 +23,10 @@ class NotificationService {
   /// Initializes the local notification service, registers channels,
   /// and automatically schedules the daily mental health check reminder.
   Future<void> initialize() async {
+    if (kIsWeb) {
+      debugPrint('Local notifications not supported on Web.');
+      return;
+    }
     // 1. Initialize timezones (essential for scheduling recurring alerts at specific hours)
     tz.initializeTimeZones();
 
@@ -42,7 +52,11 @@ class NotificationService {
     await _localNotificationsPlugin.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Can be used to navigate to AddMoodScreen upon tapping
+        if (response.payload == 'ADD_MOOD') {
+          navigatorKey.currentState?.push(
+            MaterialPageRoute(builder: (context) => const AddMoodScreen()),
+          );
+        }
       },
     );
 
@@ -50,8 +64,8 @@ class NotificationService {
     await scheduleDailyReminder();
   }
 
-  /// Requests permission to display notifications explicitly for Android 13+ (API 33+) and iOS.
   Future<bool> requestPermissions() async {
+    if (kIsWeb) return false;
     if (Platform.isAndroid) {
       final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
           _localNotificationsPlugin.resolvePlatformSpecificImplementation<
@@ -78,6 +92,7 @@ class NotificationService {
 
   /// Schedules a recurring notification daily at 21:00 (9:00 PM)
   Future<void> scheduleDailyReminder() async {
+    if (kIsWeb) return;
     const int notificationId = 101; // Unique ID for our daily mental health reminder
 
     // Set up Android specific notification channel details
@@ -117,6 +132,7 @@ class NotificationService {
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time, // Enforces daily recurrence
+      payload: 'ADD_MOOD',
     );
   }
 
@@ -135,6 +151,43 @@ class NotificationService {
 
   /// Cancels the scheduled daily reminder
   Future<void> cancelDailyReminder() async {
+    if (kIsWeb) return;
     await _localNotificationsPlugin.cancel(101);
+  }
+
+  /// Triggers an instant notification for testing or immediate check-in
+  Future<void> showInstantCheckInNotification() async {
+    if (kIsWeb) return;
+    const int notificationId = 102; // Different ID to avoid overriding daily one
+
+    const AndroidNotificationDetails androidNotificationDetails =
+        AndroidNotificationDetails(
+      'instant_reminder_channel_id',
+      'Nhắc Nhở Tức Thì',
+      channelDescription: 'Kênh gửi thông báo nhắc nhở chăm sóc sức khỏe tinh thần tức thì',
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+    );
+
+    const DarwinNotificationDetails darwinNotificationDetails =
+        DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails notificationDetails = NotificationDetails(
+      android: androidNotificationDetails,
+      iOS: darwinNotificationDetails,
+    );
+
+    await _localNotificationsPlugin.show(
+      notificationId,
+      'SoulFlow Check-in 🧘',
+      'Dành 1 phút để ghi nhận cảm xúc hiện tại của bạn nhé!',
+      notificationDetails,
+      payload: 'ADD_MOOD', // Payload to navigate to AddMoodScreen upon tapping
+    );
   }
 }

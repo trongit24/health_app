@@ -3,10 +3,10 @@ import '../../../../core/theme/soul_flow_theme.dart';
 import '../../../../core/services/localizations.dart';
 import 'dashboard_view.dart';
 import 'journal_view.dart';
-import 'zen_space_view.dart';
+import 'room_view.dart';
 import 'profile_stats_view.dart';
 import 'add_mood_screen.dart';
-import 'ai_support_screen.dart';
+
 
 class SoulFlowHomeFrame extends StatefulWidget {
   const SoulFlowHomeFrame({super.key});
@@ -37,7 +37,7 @@ class _SoulFlowHomeFrameState extends State<SoulFlowHomeFrame> {
         },
       ),
       const JournalView(),
-      const ZenSpaceView(),
+      const RoomView(),
       const ProfileStatsView(),
     ];
   }
@@ -86,16 +86,7 @@ class _SoulFlowHomeFrameState extends State<SoulFlowHomeFrame> {
           child: _views[_currentIndex],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const AiSupportScreen()),
-          );
-        },
-        backgroundColor: SoulFlowTheme.primarySage,
-        tooltip: 'AI Support',
-        child: const Icon(Icons.auto_awesome, color: Colors.white),
-      ),
+
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
@@ -143,9 +134,9 @@ class _SoulFlowHomeFrameState extends State<SoulFlowHomeFrame> {
                 label: localizations.translate('journal'),
               ),
               BottomNavigationBarItem(
-                icon: const Icon(Icons.spa_outlined),
-                activeIcon: const Icon(Icons.spa),
-                label: localizations.translate('meditation'),
+                icon: const Icon(Icons.group_outlined),
+                activeIcon: const Icon(Icons.group),
+                label: localizations.translate('sharing_room'),
               ),
               BottomNavigationBarItem(
                 icon: const Icon(Icons.person_outline),

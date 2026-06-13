@@ -19,24 +19,24 @@ class MoodManager {
   final DatabaseService _databaseService = DatabaseService();
   final List<MoodModel> _inMemoryLogs = [];
   
-  // A broadcast stream controller that exposes the active list of mood logs
-  final _moodsController = StreamController<List<MoodModel>>.broadcast();
-  StreamSubscription<List<MoodModel>>? _firestoreSubscription;
+  // A broadcast stream controller that exposes the active list of offline mood logs
+  final _offlineMoodsController = StreamController<List<MoodModel>>.broadcast();
+
+  late final Stream<List<MoodModel>> _moodStream;
 
   MoodManager._internal() {
     _initLocalLogs();
+    _initMoodStream();
 
-    // Safely listen to Firebase Auth changes to dynamically switch data sources
+    // Safely listen to Firebase Auth changes to dynamically sync data sources
     try {
       FirebaseAuth.instance.authStateChanges().listen((user) {
-        _updateStreamSubscription(user);
         if (user != null) {
           syncOfflineLogsToCloud();
         }
       });
     } catch (_) {
       // Firebase not initialized or unsupported platform
-      _updateStreamSubscription(null);
     }
   }
 
@@ -175,56 +175,44 @@ class MoodManager {
     }
   }
 
-  /// Switch subscription dynamically between Firestore and mock local fallback
-  void _updateStreamSubscription(User? user) {
-    _firestoreSubscription?.cancel();
-    if (user != null) {
-      try {
-        _firestoreSubscription = _databaseService.getMoodStream().listen(
+  /// Emits real-time lists of mood logs
+  void _initMoodStream() {
+    _moodStream = Stream.multi((controller) {
+      final user = _safeCurrentUser();
+      if (user != null) {
+        final sub = _databaseService.getMoodStream().listen(
           (logs) {
-            _moodsController.add(logs);
+            controller.add(logs);
           },
           onError: (error) {
-            // Fallback to local memory logs if Firestore fails/denied
             debugPrint('Firestore stream error, falling back to local: $error');
-            // Use microtask to ensure broadcast listeners are subscribed before emitting
-            Future.microtask(() => _emitLocalLogs());
+            _inMemoryLogs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+            controller.add(List.unmodifiable(_inMemoryLogs));
           },
         );
-      } catch (_) {
-        Future.microtask(() => _emitLocalLogs());
+        controller.onCancel = () => sub.cancel();
+      } else {
+        _inMemoryLogs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+        controller.add(List.unmodifiable(_inMemoryLogs));
+        
+        final sub = _offlineMoodsController.stream.listen(
+          (logs) {
+            controller.add(logs);
+          },
+          onError: (err) {
+            controller.addError(err);
+          },
+        );
+        controller.onCancel = () => sub.cancel();
       }
-    } else {
-      Future.microtask(() => _emitLocalLogs());
-    }
+    });
   }
 
-  /// Emits real-time lists of mood logs
-  Stream<List<MoodModel>> get moodStream {
-    final user = _safeCurrentUser();
-    if (user != null) {
-      try {
-        // Re-subscribe to Firestore to ensure new broadcast listeners get fresh data
-        _updateStreamSubscription(user);
-        return _moodsController.stream;
-      } catch (_) {}
-    }
-    // Return local list as stream immediately
-    Future.microtask(() => _emitLocalLogs());
-    return _moodsController.stream;
-  }
-
-  /// Always emits current in-memory logs to the stream (used as fallback)
-  void _emitLocalLogs() {
-    _inMemoryLogs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    _moodsController.add(List.unmodifiable(_inMemoryLogs));
-  }
+  Stream<List<MoodModel>> get moodStream => _moodStream;
 
   void _notifyListeners() {
     _inMemoryLogs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-    if (_safeCurrentUser() == null) {
-      _moodsController.add(List.unmodifiable(_inMemoryLogs));
-    }
+    _offlineMoodsController.add(List.unmodifiable(_inMemoryLogs));
   }
 
   /// Check if Cloud Sync (Firebase Auth) is active
@@ -237,7 +225,6 @@ class MoodManager {
     try {
       final userCredential = await FirebaseAuth.instance.signInAnonymously();
       if (userCredential.user != null) {
-        _updateStreamSubscription(userCredential.user);
         return true;
       }
     } catch (e) {
@@ -250,7 +237,6 @@ class MoodManager {
   Future<void> disableCloudSync() async {
     try {
       await FirebaseAuth.instance.signOut();
-      _updateStreamSubscription(null);
     } catch (e) {
       debugPrint('Error disabling Cloud Sync: $e');
     }
