@@ -524,32 +524,35 @@ class _AddMoodScreenState extends State<AddMoodScreen> {
 
               return GestureDetector(
                 onTap: () => _onMoodScoreChanged(score),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutBack,
-                  padding: EdgeInsets.all(isSelected ? 8 : 6),
-                  decoration: BoxDecoration(
-                    color: isSelected ? Color(color.toARGB32()).withValues(alpha: 0.2) : Colors.transparent,
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: isSelected ? Color(color.toARGB32()) : Colors.transparent,
-                      width: 2.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: isSelected ? Color(color.toARGB32()).withValues(alpha: 0.35) : Colors.transparent,
-                        blurRadius: isSelected ? 12 : 0,
-                        spreadRadius: isSelected ? 1 : 0,
-                      )
-                    ],
-                  ),
-                  child: SizedBox(
-                    width: isSelected ? 45 : 36,
-                    height: isSelected ? 45 : 36,
-                    child: Center(
-                      child: Text(
-                        _moodEmojis[index],
-                        style: const TextStyle(fontSize: 28),
+                child: SizedBox(
+                  width: 55,
+                  height: 55,
+                  child: Center(
+                    child: AnimatedScale(
+                      scale: isSelected ? 1.25 : 1.0,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeOutBack,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isSelected ? color.withValues(alpha: 0.2) : Colors.transparent,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: isSelected ? color : Colors.transparent,
+                            width: 2,
+                          ),
+                          boxShadow: isSelected ? [
+                            BoxShadow(
+                              color: color.withValues(alpha: 0.35),
+                              blurRadius: 10,
+                            )
+                          ] : [],
+                        ),
+                        child: Text(
+                          _moodEmojis[index],
+                          style: const TextStyle(fontSize: 26),
+                        ),
                       ),
                     ),
                   ),
@@ -558,16 +561,12 @@ class _AddMoodScreenState extends State<AddMoodScreen> {
             }),
           ),
           const SizedBox(height: 20),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: Text(
-              labels[_selectedMoodScore - 1],
-              key: ValueKey<int>(_selectedMoodScore),
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Color.lerp(_moodColors[_selectedMoodScore - 1], isDark ? Colors.white : Colors.black87, 0.45),
-              ),
+          Text(
+            labels[_selectedMoodScore - 1],
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color.lerp(_moodColors[_selectedMoodScore - 1], isDark ? Colors.white : Colors.black87, 0.45),
             ),
           ),
           const SizedBox(height: 18),
