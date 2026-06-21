@@ -28,7 +28,7 @@ Tài liệu này tóm tắt toàn bộ thông tin chi tiết về ứng dụng *
 
 ### 2.3. Nhật ký cảm xúc & AI Voice Diary
 *   **Nhật ký chữ**: Cho phép người dùng lưu lại cảm xúc và đính kèm các thẻ trạng thái con (Tags).
-*   **AI Voice Diary (Nhật ký giọng nói)**: Người dùng có thể nhấn nút nói tiếng Việt, ứng dụng sử dụng thư viện `speech_to_text` để lắng nghe âm thanh và tự động chuyển đổi thành văn bản lưu vào nhật ký.
+*   **AI Voice Diary (Nhật ký giọng nói)**: Người dùng có thể nhấn nút để nói tiếng Việt hoặc tiếng Anh. Ứng dụng tự động điều chỉnh ngôn ngữ nhận diện theo ngôn ngữ hiện tại của app (Tiếng Việt sử dụng `vi_VN`, Tiếng Anh sử dụng `en_US`) bằng thư viện `speech_to_text` để lắng nghe âm thanh và tự động chuyển đổi thành văn bản lưu vào nhật ký.
 *   **Tự động phân tích cảm xúc (Sentiment Analysis)**:
     *   Sử dụng bộ dịch vụ `VietnameseSentimentService` chạy 100% offline.
     *   Sử dụng thuật toán so khớp cụm từ tiếng Việt từ dài đến ngắn (Greedy Phrase Matching) dựa trên từ điển cảm xúc được tích hợp sẵn để chấm điểm văn bản nhật ký từ `-5.0` (cực kỳ tiêu cực) đến `5.0` (cực kỳ tích cực).
