@@ -220,7 +220,7 @@ class _JournalViewState extends State<JournalView> {
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: Text(
-                          '${localizations.translate('popular_emotion')}: ${(log.sentimentScore! >= 0 ? '+' : '')}${log.sentimentScore}',
+                          '${localizations.translate('sentiment_score')}: ${(log.sentimentScore! >= 0 ? '+' : '')}${log.sentimentScore}',
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,

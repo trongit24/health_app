@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
+import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import '../../../../core/theme/soul_flow_theme.dart';
 import '../../../../core/services/localizations.dart';
 
@@ -33,9 +34,22 @@ class _CameraScannerOverlayState extends State<CameraScannerOverlay> with Single
   Timer? _scanTimer;
   bool _useSimulationFallback = false;
 
+  FaceDetector? _faceDetector;
+  bool _isProcessingFace = false;
+  bool _noFaceDetected = false;
+  bool _hasTriggeredScan = false;
+
   @override
   void initState() {
     super.initState();
+    
+    // Initialize FaceDetector with classification enabled for smile probability
+    final options = FaceDetectorOptions(
+      enableClassification: true,
+      performanceMode: FaceDetectorMode.accurate,
+    );
+    _faceDetector = FaceDetector(options: options);
+
     _initCamera();
 
     _animationController = AnimationController(
@@ -146,48 +160,147 @@ class _CameraScannerOverlayState extends State<CameraScannerOverlay> with Single
     }
   }
 
+  // Ham thuc hien chup anh va phan tich khuon mat thuc te bang AI (ML Kit)
+  Future<void> _detectRealFace() async {
+    // Kiem tra neu camera chua khoi tao hoac dang chay gia lap thi bo qua
+    if (_controller == null || !_controller!.value.isInitialized || _useSimulationFallback) {
+      return;
+    }
+
+    setState(() {
+      _isProcessingFace = true;
+      _scanningText = 'Đang chụp ảnh phân tích...';
+    });
+
+    try {
+      // 1. Chup anh tu camera truoc va luu vao bo nho tam
+      final file = await _controller!.takePicture();
+      if (!mounted) return;
+
+      setState(() {
+        _scanningText = 'Đang chạy mô hình AI nhận diện khuôn mặt...';
+      });
+
+      // 2. Chuyen doi file anh sang dinh dang InputImage cua Google ML Kit
+      final inputImage = InputImage.fromFilePath(file.path);
+      
+      // 3. Goi ML Kit thuc hien phat hien khuon mat va chi so
+      final faces = await _faceDetector!.processImage(inputImage);
+
+      if (!mounted) return;
+
+      // 4. Kiem tra xem co phat hien duoc khuon mat nao khong
+      if (faces.isNotEmpty) {
+        setState(() {
+          final face = faces.first;
+          // Lay chi so smile probability (ti le nuc cuoi) tu AI
+          _smileProb = face.smilingProbability ?? 0.5;
+          _noFaceDetected = false;
+
+          // 5. Quy doi ti le nuc cuoi sang 5 muc do tu 1 (Rat buon) den 5 (Rat vui)
+          if (_smileProb > 0.65) {
+            _detectedScore = 5; // Very Happy (Rat vui)
+          } else if (_smileProb > 0.40) {
+            _detectedScore = 4; // Happy (Vui)
+          } else if (_smileProb > 0.15) {
+            _detectedScore = 3; // Neutral (Binh thuong)
+          } else if (_smileProb > 0.05) {
+            _detectedScore = 2; // Sad (Buon)
+          } else {
+            _detectedScore = 1; // Very Sad (Rat buon)
+          }
+        });
+      } else {
+        // Neu khong tim thay khuon mat nao
+        setState(() {
+          _noFaceDetected = true;
+          _smileProb = 0.5;
+          _detectedScore = 3; // Mac dinh la Binh thuong
+        });
+      }
+    } catch (e) {
+      debugPrint('Error detecting face: $e');
+      setState(() {
+        _noFaceDetected = true;
+        _smileProb = 0.5;
+        _detectedScore = 3;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          // Ket thuc qua trinh phan tich, tiep tuc chay thanh tien trinh
+          _isProcessingFace = false;
+        });
+      }
+    }
+  }
+
+  // Ham khoi chay thanh tien trinh quet camera (Simulation Progress)
   void _startScanningSimulation() {
     _scanTimer?.cancel();
-    
-    // Generate simulated results
+    _scanProgress = 0.0;
+    _scanComplete = false;
+    _noFaceDetected = false;
+    _isProcessingFace = false;
+    _hasTriggeredScan = false;
+
+    // Khoi tao gia tri ngau nhien cho che do gia lap (fallback)
     final random = Random();
     _smileProb = random.nextDouble();
     _calmProb = random.nextDouble();
 
-    // Map probabilities to mood score (1 to 5)
     if (_smileProb > 0.75) {
-      _detectedScore = 5; // Very Happy
+      _detectedScore = 5;
     } else if (_smileProb > 0.5) {
-      _detectedScore = 4; // Happy
+      _detectedScore = 4;
     } else if (_calmProb > 0.6) {
-      _detectedScore = 3; // Neutral
+      _detectedScore = 3;
     } else if (_smileProb > 0.25) {
-      _detectedScore = 2; // Sad
+      _detectedScore = 2;
     } else {
-      _detectedScore = 1; // Very Sad
+      _detectedScore = 1;
     }
 
+    // Chay timer tang tien trinh quet moi 60ms
     _scanTimer = Timer.periodic(const Duration(milliseconds: 60), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
 
+      // Neu dang trong qua trinh AI phan tich anh chup thi tam dung thanh tien trinh o day
+      if (_isProcessingFace) {
+        return;
+      }
+
       setState(() {
+        // Neu chay thiet bi that va progress dat 40%, kich hoat AI chup anh phan tich
+        if (!_useSimulationFallback && _controller != null && _controller!.value.isInitialized && _scanProgress >= 0.40 && !_hasTriggeredScan) {
+          _hasTriggeredScan = true;
+          _detectRealFace();
+          return;
+        }
+
         _scanProgress += 0.02;
 
+        // Cap nhat dong chu trang thai quet duoi thanh tien trinh
         if (_scanProgress < 0.25) {
           _scanningText = 'Định vị khuôn mặt...';
         } else if (_scanProgress < 0.50) {
-          _scanningText = 'Đo đạc chỉ số cơ mặt...';
+          _scanningText = _useSimulationFallback ? 'Đo đạc chỉ số cơ mặt...' : 'Đang chuẩn bị quét...';
         } else if (_scanProgress < 0.75) {
-          _scanningText = 'Đo tỷ lệ nụ cười (Smile: ${(_smileProb * 100).toInt()}%)...';
+          _scanningText = _useSimulationFallback 
+              ? 'Đo tỷ lệ nụ cười (Smile: ${(_smileProb * 100).toInt()}%)...'
+              : (_noFaceDetected 
+                  ? 'Không tìm thấy khuôn mặt (Dùng giả lập)...' 
+                  : 'Đo tỷ lệ nụ cười (Smile: ${(_smileProb * 100).toInt()}%)...');
         } else if (_scanProgress < 0.95) {
-          _scanningText = 'Phân tích chấn động học tâm lý...';
+          _scanningText = _noFaceDetected ? 'Đặt lại bộ phân tích cảm xúc...' : 'Phân tích chấn động học tâm lý...';
         } else {
           _scanningText = 'Đang khóa cảm xúc...';
         }
 
+        // Khi dat 100% tien trinh thi ket thuc quet
         if (_scanProgress >= 1.0) {
           _scanProgress = 1.0;
           _scanComplete = true;
@@ -201,6 +314,7 @@ class _CameraScannerOverlayState extends State<CameraScannerOverlay> with Single
   void dispose() {
     _scanTimer?.cancel();
     _animationController.dispose();
+    _faceDetector?.close();
     final tempController = _controller;
     _controller = null;
     if (tempController != null) {
@@ -358,6 +472,14 @@ class _CameraScannerOverlayState extends State<CameraScannerOverlay> with Single
                         ),
                       ],
                     ),
+                    if (_noFaceDetected && !_useSimulationFallback) ...[
+                      const SizedBox(height: 10),
+                      const Text(
+                        '⚠️ Không nhận diện được khuôn mặt rõ nét. Vui lòng căn chỉnh lại góc camera hoặc giữ thẳng khuôn mặt.',
+                        style: TextStyle(color: Colors.amber, fontSize: 11, height: 1.3),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                     const SizedBox(height: 18),
                     Row(
                       children: [

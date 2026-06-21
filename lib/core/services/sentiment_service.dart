@@ -75,55 +75,49 @@ class VietnameseSentimentService {
   /// Exposes a copy of the active lexicon database
   Map<String, double> get activeLexicon => Map.unmodifiable(_lexicon);
 
-  /// Performs offline sentiment analysis on a Vietnamese string.
-  ///
-  /// Cleans the text, tokenizes it using a phrase-matching greedy search to support
-  /// compound words, and returns a double score strictly clamped between -5.0 and 5.0.
+  // Ham thuc hien phan tich cam xuc (Sentiment Analysis) offline
   double analyze(String text) {
     if (text.trim().isEmpty) return 0.0;
 
-    // 1. Preprocess: Lowercase, remove typical punctuation for uniform matching
+    // 1. Tien xu ly chu: Chuyen sang chu thuong, xoa cac dau cau dac biet de so khop de dang hon
     String cleanText = text.toLowerCase();
     
-    // Replace typical punctuation with spaces to separate syllables cleanly
+    // Dung bieu thuc chinh quy xoa bo cac ky tu nhu cham, phay, cham hoi...
     final punctuation = RegExp(r'[.,!?;:"“”()\[\]{}\-_\/\\]');
     cleanText = cleanText.replaceAll(punctuation, ' ');
-    // Condense multiple spaces into one
+    // Rut gon cac khoang trang thua
     cleanText = cleanText.replaceAll(RegExp(r'\s+'), ' ');
 
     double totalScore = 0.0;
     int matchCount = 0;
 
-    // 2. Greedy phrase matching: Sort lexicon keys by length in descending order.
-    // This guarantees that compound phrases (e.g. 'mệt mỏi' or 'tuyệt vời') are matched
-    // and consumed before single words (e.g. 'mệt' or 'vui') can interfere.
+    // 2. Thuat toan Greedy matching: Sap xep tu khoa tu dai den ngan
+    // Dieu nay dam bao cac tu ghep (nhu 'tuyert voi') se duoc quet truoc cac tu don (nhu 'vui')
     final sortedKeywords = _lexicon.keys.toList()
       ..sort((a, b) => b.length.compareTo(a.length));
 
     for (final keyword in sortedKeywords) {
-      // Use boundary-safe search to avoid partial matching inside non-related words.
-      // E.g., we want to match 'vui' but not the 'vui' inside 'vui sướng' if 'vui sướng' is processed first.
+      // Bieu thuc chinh quy dam bao khop dung tu chu khong khop phan nho cua tu khac
       final escapedKeyword = RegExp.escape(keyword);
       final regex = RegExp('(^|\\s)$escapedKeyword(\\s|\$)');
 
       while (regex.hasMatch(cleanText)) {
+        // Cong don diem tu dien cua tu khoa duoc phat hien
         final double score = _lexicon[keyword] ?? 0.0;
         totalScore += score;
         matchCount++;
 
-        // Consume the matched phrase by replacing it with a placeholder space
-        // to prevent duplicate or sub-word matching.
+        // Xoa tu da tim thay khoi chu de tranh viec trung lap hoac phan tich lai
         cleanText = cleanText.replaceFirst(regex, ' ');
-        // Clean double spaces again
         cleanText = cleanText.replaceAll(RegExp(r'\s+'), ' ');
       }
     }
 
-    // 3. Normalize score:
-    // If no emotion terms are found, return 0.0 (neutral).
+    // 3. Tra ve ket qua:
+    // Neu khong co tu cam xuc nao -> Tra ve 0.0 (Trung tinh)
     if (matchCount == 0) return 0.0;
 
-    // We clamp the sum score directly between -5.0 and 5.0
+    // Diem so cuoi cung se duoc gioi han tu -5.0 (tieu cuc nhat) den 5.0 (tich cuc nhat)
     return double.parse(totalScore.clamp(-5.0, 5.0).toStringAsFixed(2));
   }
 }

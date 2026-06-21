@@ -15,11 +15,12 @@ import 'features/auth/presentation/views/onboarding_screen.dart';
 import 'features/auth/presentation/views/login_screen.dart';
 import 'features/mood/presentation/views/soul_flow_home_frame.dart';
 
-
+// Diem khoi dau cua toan bo ung dung Flutter (Entry point)
 void main() async {
+  // Dam bao cac thanh phan bindings cua Flutter duoc khoi tao truoc khi dung async
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Initialize Firebase
+  // 1. Khoi tao Firebase cho ung dung
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -28,14 +29,16 @@ void main() async {
     debugPrint('Firebase initialization failed: $e');
   }
 
-  // 2. Initialize Notification service
+  // 2. Khoi tao dich vu thong bao nhac nho hang ngay
   final notificationService = NotificationService();
   try {
     await notificationService.initialize();
     
-    // Check daily notification preference and schedule if active
+    // Lay thong tin lua chon nhac nho tu bo nho tam thoi SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final notificationsEnabled = prefs.getBool('daily_notification_enabled') ?? true;
+    
+    // Neu nguoi dung dong y nhan thong bao thi yeu cau quyen va len lich thong bao
     if (notificationsEnabled) {
       await notificationService.requestPermissions();
       await notificationService.scheduleDailyReminder();
@@ -44,9 +47,7 @@ void main() async {
     debugPrint('Notification service initialization failed: $e');
   }
 
-
-
-  // 4. Determine Initial Route
+  // 3. Xac dinh man hinh dau tien khi nguoi dung mo app (Initial Route)
   Widget initialScreen;
   try {
     final prefs = await SharedPreferences.getInstance();
@@ -54,28 +55,33 @@ void main() async {
     final isLoggedIn = FirebaseAuth.instance.currentUser != null;
 
     if (!seenOnboarding) {
+      // Neu chua tung xem man hinh gioi thieu -> Mo OnboardingScreen
       initialScreen = const OnboardingScreen();
     } else if (!isLoggedIn) {
+      // Neu chua dang nhap -> Mo LoginScreen
       initialScreen = const LoginScreen();
     } else {
+      // Neu da dang nhap truoc do -> Mo trang chu chinh (SoulFlowHomeFrame)
       initialScreen = const SoulFlowHomeFrame();
     }
   } catch (e) {
     initialScreen = const OnboardingScreen();
   }
 
+  // Run app kem theo MultiProvider de quan ly trang thai app (Theme, Ngon ngu, User)
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()), // Quan ly theme (Sang/Toi)
+        ChangeNotifierProvider(create: (_) => LocaleProvider()), // Quan ly ngon ngu (Anh/Viet)
+        ChangeNotifierProvider(create: (_) => AuthProvider()), // Quan ly dang nhap, dang ky
       ],
       child: SoulFlowApp(initialScreen: initialScreen),
     ),
   );
 }
 
+// Widget chinh chua cau hinh MaterialApp
 class SoulFlowApp extends StatelessWidget {
   final Widget initialScreen;
   const SoulFlowApp({super.key, required this.initialScreen});
@@ -86,24 +92,25 @@ class SoulFlowApp extends StatelessWidget {
     final localeProvider = Provider.of<LocaleProvider>(context);
 
     return MaterialApp(
+      // Key dieu huong thong bao de nhan vao thong bao co the tu dong mo man hinh mong muon
       navigatorKey: NotificationService.navigatorKey,
       title: 'SoulFlow',
-      theme: SoulFlowTheme.lightTheme,
-      darkTheme: SoulFlowTheme.darkTheme,
-      themeMode: themeProvider.themeMode,
-      locale: localeProvider.locale,
+      theme: SoulFlowTheme.lightTheme, // Theme sang
+      darkTheme: SoulFlowTheme.darkTheme, // Theme toi
+      themeMode: themeProvider.themeMode, // Che do hien tai (Light/Dark/System)
+      locale: localeProvider.locale, // Ngon ngu hien tai
       supportedLocales: const [
         Locale('vi'),
         Locale('en'),
       ],
       localizationsDelegates: const [
-        AppLocalizationsDelegate(),
+        AppLocalizationsDelegate(), // Localization tu dinh nghia de dich chu trong app
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      debugShowCheckedModeBanner: false,
-      home: initialScreen,
+      debugShowCheckedModeBanner: false, // Tat chu banner debug
+      home: initialScreen, // Man hinh hien thi dau tien
     );
   }
 }
