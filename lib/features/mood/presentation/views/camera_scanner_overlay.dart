@@ -214,7 +214,7 @@ class _CameraScannerOverlayState extends State<CameraScannerOverlay> with Single
         // Neu khong tim thay khuon mat nao
         setState(() {
           _noFaceDetected = true;
-          _smileProb = 0.5;
+          _smileProb = 0.3; // De dong nhat voi muc Binh thuong (0.15 - 0.40)
           _detectedScore = 3; // Mac dinh la Binh thuong
         });
       }
@@ -222,7 +222,7 @@ class _CameraScannerOverlayState extends State<CameraScannerOverlay> with Single
       debugPrint('Error detecting face: $e');
       setState(() {
         _noFaceDetected = true;
-        _smileProb = 0.5;
+        _smileProb = 0.3; // De dong nhat voi muc Binh thuong (0.15 - 0.40)
         _detectedScore = 3;
       });
     } finally {
